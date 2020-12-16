@@ -1,0 +1,19 @@
+// https://docs.gradle.org/current/userguide/plugins.html#sec:binary_plugins
+pluginManagement {
+    plugins {
+        id 'org.springframework.boot' version "${springBootPluginVersion}"
+    }
+    resolutionStrategy {
+    }
+    repositories {
+        maven {
+            url 'http://maven.aliyun.com/nexus/content/groups/public/'
+        }
+        maven {
+            url 'http://maven.aliyun.com/nexus/content/repositories/jcenter'
+        }
+        gradlePluginPortal()
+    }
+}
+rootProject.name = 'message-queue'
+
