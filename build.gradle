@@ -1,12 +1,18 @@
 plugins {
     id 'java'
     id 'idea'
-    id 'org.springframework.boot' apply false // 仅使用 SpringBootPlugin.BOM
+    id 'org.springframework.boot' //apply false // 仅使用 SpringBootPlugin.BOM
     id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+}
+tasks.withType(JavaCompile) {
+    options.encoding = "UTF-8"
 }
 dependencyManagement {
     imports {
         mavenBom(org.springframework.boot.gradle.plugin.SpringBootPlugin.BOM_COORDINATES)
+        mavenBom('org.springframework.cloud:spring-cloud-dependencies:Greenwich.SR6') {
+//                    bomProperty 'okhttp3.version', '3.9.1'
+        }
     }
 }
 
@@ -19,19 +25,24 @@ repositories {
     }
 }
 
-tasks.withType(JavaCompile) {
-    options.encoding = "UTF-8"
-}
-
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-amqp'
     implementation 'org.springframework.boot:spring-boot-starter-test'
     implementation 'org.springframework.boot:spring-boot-starter-web'
 
+//    implementation 'org.springframework.cloud:spring-cloud-context'
+//    implementation 'org.springframework.cloud:spring-cloud-starter-sleuth'
+    implementation 'org.springframework.cloud:spring-cloud-stream'
+//    implementation 'org.springframework.cloud:spring-cloud-starter-stream-rabbit'
+
+//    compile group: 'org.springframework.cloud', name: 'spring-cloud-stream', version: '3.0.10.RELEASE'
 
 
     testCompile group: 'org.springframework.amqp', name: 'spring-rabbit-test', version: '2.3.2'
 
+    // 基准测试
+    implementation 'org.openjdk.jmh:jmh-core:1.19'
+    implementation 'org.openjdk.jmh:jmh-generator-annprocess:1.19'
 
 
     annotationProcessor 'org.projectlombok:lombok:1.18.12'

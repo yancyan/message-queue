@@ -1,3 +1,3 @@
 ### message-queue
 
-amqp > rabbit > spring integration > spring cloud stream.
+amqp > rabbit > spring cloud stream.
