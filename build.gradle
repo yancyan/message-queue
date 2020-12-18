@@ -3,6 +3,7 @@ plugins {
     id 'idea'
     id 'org.springframework.boot' //apply false // 仅使用 SpringBootPlugin.BOM
     id 'io.spring.dependency-management' version '1.0.10.RELEASE'
+    id 'org.hidetake.ssh' version '2.9.0'
 }
 tasks.withType(JavaCompile) {
     options.encoding = "UTF-8"
@@ -22,6 +23,15 @@ repositories {
     }
     maven {
         url 'http://maven.aliyun.com/nexus/content/repositories/jcenter'
+    }
+}
+
+bootJar{
+    manifest {
+        attributes 'Main-Class': 'org.springframework.boot.loader.PropertiesLauncher'
+    }
+    layered{
+        enabled = false
     }
 }
 
@@ -48,7 +58,56 @@ dependencies {
     annotationProcessor 'org.projectlombok:lombok:1.18.12'
     compileOnly 'org.projectlombok:lombok:1.18.12'
 }
-
-
+task pushBootJarTo() {
+    group = "docker"
+    dependsOn project.bootJar
+    doLast {
+        def startTime = System.currentTimeMillis()
+        def deployLocation = ' /root/deploy/' + project.name + '/'
+        def deployName = project.name + '.jar' //jar.archiveName
+        remotes{
+            server{
+                host = 'xxxx'
+                user = 'root'
+                password = 'root'
+            }
+        }
+        ssh.run {
+            settings {
+                timeoutSec = 180
+                retryCount = 2
+                retryWaitSec = 3
+                keepAliveSec = 120
+            }
+            try {
+                session(remotes.server) {
+                    println("Commond: docker ps -aqf 'name=" + project.name + "' --format '{{ .Status }}'")
+                    def containerStatus = execute "docker ps -aqf 'name=" + project.name + "' --format '{{ .Status }}'"
+                    if ('' != containerStatus) {
+                        if (containerStatus.startsWith('Up')) {
+                            println '命令: docker stop  $(docker ps -aqf name=' + project.name + ')'
+                            execute 'docker stop  $(docker ps -aqf name=' + project.name + ')'
+                        }
+                        println '命令: rm -rf ' + deployLocation + '**'
+                        execute 'rm -rf ' + deployLocation + '**'
+                        def localFilePath = project.buildDir.path + '/libs/' + deployName
+                        def remoteFilePath = deployLocation + deployName
+                        println '命令: mkdir -p ' + deployLocation
+                        execute 'mkdir -p ' + deployLocation
+                        println '命令: put from:' + localFilePath + 'into:' + remoteFilePath
+                        put from: localFilePath, into: remoteFilePath
+                        println '命令: docker start  $(docker ps -aqf name=' + project.name + ')'
+                        execute 'docker start  $(docker ps -aqf name=' + project.name + ') &'
+                    } else {
+                        println 'Container ' + project.name + ' have not been created.'
+                    }
+                }
+            } catch (Exception e) {
+                logger.error("############# project.name: " + project.name + " Fail", e)
+            }
+        }
+        println '############# project.name: ' + project.name + ', task pushBootJarTo time: ' + System.currentTimeMillis() - startTime + '/mills'
+    }
+}
 
 
