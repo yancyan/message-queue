@@ -1,0 +1,15 @@
+version: "3"
+services:
+  rabbitmq:
+    image: yysam/rabbitmq3.6.10_delay_message:latest
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - /usr/local/docker/rabbitmq:/var/lib/rabbitmq/mnesia
+    environment:
+      - TZ=Asia/Shanghai
+      - HOSTNAME=rabbitmq
+    extra_hosts:
+      - "rabbitmq:127.0.0.1"
